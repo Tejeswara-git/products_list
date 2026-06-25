@@ -42,14 +42,25 @@ app.use((err, _req, res, _next) => {
 
 // Only listen when this file is run directly (not imported by tests)
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Product Catalog API listening on http://localhost:${PORT}`);
-    console.log('Endpoints:');
-    console.log('  GET /health');
-    console.log('  GET /api/products');
-    console.log('  GET /api/products/categories');
-    console.log('  GET /api/products/:id');
-  });
+  // Test DB connectivity before accepting traffic
+  const pool = require('./db/pool');
+  pool.query('SELECT 1')
+    .then(() => {
+      console.log('✅ Database connection successful');
+      app.listen(PORT, () => {
+        console.log(`Product Catalog API listening on port ${PORT}`);
+        console.log('Endpoints:');
+        console.log('  GET /health');
+        console.log('  GET /api/products');
+        console.log('  GET /api/products/categories');
+        console.log('  GET /api/products/:id');
+      });
+    })
+    .catch(err => {
+      console.error('❌ Failed to connect to database:', err.message);
+      console.error('Check DATABASE_URL or DB_* environment variables on Render.');
+      process.exit(1);
+    });
 }
 
 module.exports = app;   // exported for supertest
