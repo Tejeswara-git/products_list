@@ -1,11 +1,8 @@
 /**
  * db/pool.js  –  Singleton pg connection pool
  *
- * Import this wherever you need a database connection.
- * The pool is created once and reused across all requests.
- *
  * Connection strategy:
- *  1. If DATABASE_URL is set (e.g. on Render), use it with SSL enabled.
+ *  1. If DATABASE_URL is set (Render, Railway, Supabase, etc.) → use it with SSL.
  *  2. Otherwise fall back to individual DB_* env vars (local dev).
  */
 
@@ -18,18 +15,21 @@ const { Pool } = require('pg');
 let poolConfig;
 
 if (process.env.DATABASE_URL) {
-  // Render (and most cloud providers) supply a single connection string.
-  // SSL is required – rejectUnauthorized:false accepts self-signed certs
-  // issued by managed-Postgres providers (Render, Supabase, Railway, etc.).
+  console.log('🔌 DB mode: DATABASE_URL detected — using connection string with SSL');
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
     max: 10,
-    idleTimeoutMillis: 30_000,
+    idleTimeoutMillis:      30_000,
     connectionTimeoutMillis: 10_000,
   };
 } else {
-  // Local development – individual env vars, no SSL needed.
+  console.log('🔌 DB mode: No DATABASE_URL — falling back to DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD');
+  console.log(`   DB_HOST=${process.env.DB_HOST || '(not set, defaulting to localhost)'}`);
+  console.log(`   DB_PORT=${process.env.DB_PORT || '(not set, defaulting to 5432)'}`);
+  console.log(`   DB_NAME=${process.env.DB_NAME || '(not set, defaulting to products_db)'}`);
+  console.log(`   DB_USER=${process.env.DB_USER || '(not set, defaulting to postgres)'}`);
+  console.log(`   DB_PASSWORD=${process.env.DB_PASSWORD ? '***' : '(not set)'}`);
   poolConfig = {
     host:     process.env.DB_HOST     || 'localhost',
     port:     Number(process.env.DB_PORT) || 5432,
@@ -37,7 +37,7 @@ if (process.env.DATABASE_URL) {
     user:     process.env.DB_USER     || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     max: 10,
-    idleTimeoutMillis: 30_000,
+    idleTimeoutMillis:      30_000,
     connectionTimeoutMillis: 5_000,
   };
 }
