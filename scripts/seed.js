@@ -37,13 +37,17 @@ const CATEGORIES = [
   'Beauty',
 ];
 
-const pool = new Pool({
-  host:     process.env.DB_HOST     || 'localhost',
-  port:     Number(process.env.DB_PORT)     || 5432,
-  database: process.env.DB_NAME     || 'products_db',
-  user:     process.env.DB_USER     || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-});
+const poolConfig = process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+  : {
+      host:     process.env.DB_HOST     || 'localhost',
+      port:     Number(process.env.DB_PORT)     || 5432,
+      database: process.env.DB_NAME     || 'products_db',
+      user:     process.env.DB_USER     || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+    };
+
+const pool = new Pool(poolConfig);
 
 async function seed() {
   console.log(`Seeding ${COUNT.toLocaleString()} products…`);
